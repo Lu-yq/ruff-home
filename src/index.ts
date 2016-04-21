@@ -1,5 +1,5 @@
 /**
- * Home web framework for Ruff.
+ * Home (Web Framework) for Ruff.
  * A tiny web framework.
  *
  * https://github.com/vilic/ruff-home
@@ -169,24 +169,9 @@ export class Server {
         this.routes.push(route);
     }
 
-    use(path: string, middleware: Middleware): void;
-    use(method: HTTPMethod, path: string, middleware: Middleware): void;
-    use(): void {
-        let method: HTTPMethod;
-        let path: string;
-        let middleware: Middleware;
-
-        if (typeof arguments[1] === 'function') {
-            path = arguments[0];
-            middleware = arguments[1];
-        } else {
-            method = arguments[0];
-            path = arguments[1];
-            middleware = arguments[2];
-        }
-
+    use(path: string, middleware: Middleware): void {
         this.add({
-            method,
+            method: undefined,
             path,
             extend: true,
             middleware

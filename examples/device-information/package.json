@@ -1,0 +1,14 @@
+{
+    "name": "device-information",
+    "version": "0.1.0",
+    "description": "A home page for device information.",
+    "author": "vilicvane",
+    "main": "src/index.js",
+    "ruff": {
+        "dependencies": {
+            "ruff-mbd-v1": "^2.0.3",
+            "home": "^0.1.1"
+        },
+        "devDependencies": {}
+    }
+}

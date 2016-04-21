@@ -1,6 +1,8 @@
 /.vscode/launch.json
 
 /src/debug/
-/node_modules/
-/ruff_modules/
+node_modules/
+ruff_modules/
 /bld/
+
+/examples/*/ruff_box.json
