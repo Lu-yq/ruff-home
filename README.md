@@ -10,6 +10,8 @@ rap install home
 
 ## Usage
 
+> The socket (writable) implementation in Ruff is not stable, try not to transfer large (more than 10kB maybe) files by now.
+
 Here's a simple example (code available [here](./examples/device-information)):
 
 **src/index.js**
