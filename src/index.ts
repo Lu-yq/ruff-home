@@ -345,7 +345,17 @@ export class Server {
                 try {
                     let stream = FS.createReadStream(filePath);
 
-                    stream.pipe(res);
+                    stream.on('data', (data: Buffer) => {
+                        let toContinue = res.write(new Buffer(<any>data));
+
+                        if (!toContinue) {
+                            stream.pause();
+                        }
+                    });
+
+                    res.on('drain', () => stream.resume());
+
+                    stream.on('end', () => res.end());
 
                     stream.on('error', reject);
                     res.on('error', reject);
