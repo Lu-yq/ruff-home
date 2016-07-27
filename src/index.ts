@@ -289,12 +289,10 @@ export class Server {
             }
         }
 
+        data = data || Object.create(null);
+
         return template.replace(/\{([$\w\d.-]+)\}/g, (text: string, expression: string) => {
             let keys = expression.split('.');
-
-            if (!data) {
-                return '';
-            }
 
             let node = data;
 
@@ -302,7 +300,7 @@ export class Server {
                 node = data[key];
 
                 if (node === undefined) {
-                    return '';
+                    return text;
                 }
             }
 
@@ -345,17 +343,7 @@ export class Server {
                 try {
                     let stream = FS.createReadStream(filePath);
 
-                    stream.on('data', (data: Buffer) => {
-                        let toContinue = res.write(new Buffer(<any>data));
-
-                        if (!toContinue) {
-                            stream.pause();
-                        }
-                    });
-
-                    res.on('drain', () => stream.resume());
-
-                    stream.on('end', () => res.end());
+                    stream.pipe(res);
 
                     stream.on('error', reject);
                     res.on('error', reject);
