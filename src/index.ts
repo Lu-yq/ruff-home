@@ -297,7 +297,7 @@ export class Server {
             let node = data;
 
             for (let key of keys) {
-                node = data[key];
+                node = node[key];
 
                 if (node === undefined) {
                     return text;
