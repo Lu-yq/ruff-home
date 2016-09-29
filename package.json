@@ -8,7 +8,6 @@
   "typings": "bld/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "incremental-build": "tsc -w",
     "test": "mocha"
   },
   "engines": {
