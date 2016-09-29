@@ -1,4 +1,5 @@
 /.vscode/
+/.ruff/
 
 /src/debug/
 node_modules/

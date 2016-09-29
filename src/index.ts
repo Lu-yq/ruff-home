@@ -34,7 +34,7 @@ export interface Middleware {
 }
 
 export interface RouteOptions {
-    method: string;
+    method: string | undefined;
     path: string;
     extend: boolean;
     middleware: Middleware;
@@ -77,7 +77,7 @@ export class Server {
     views: string;
     errorViewsFolder: string;
 
-    private _templateCache: Dictionary<string> = {};
+    private _templateCache: Dictionary<string | undefined> = {};
 
     constructor({
         views = Path.resolve('views'),
@@ -93,7 +93,7 @@ export class Server {
 
     private _handleRequest(req: Request, res: ServerResponse): void {
         let urlStr = req.url;
-        let { pathname, query: queryStr } = URL.parse(urlStr);
+        let { pathname, query: queryStr } = URL.parse(urlStr!);
 
         req.path = pathname;
         req.query = QueryString.parse(queryStr);
@@ -151,7 +151,7 @@ export class Server {
         next();
     }
 
-    add(options: RouteOptions) {
+    add(options: RouteOptions): void {
         let route = options as Route;
         let path = options.path;
 
@@ -264,12 +264,12 @@ export class Server {
         console.error(error);
     }
 
-    private _render(view: string, data: any): string {
+    private _render(view: string, data: any): string | undefined {
         if (view === '/') {
             view += 'index';
         }
 
-        let template: string;
+        let template: string | undefined;
 
         if (hop.call(this._templateCache, view)) {
             template = this._templateCache[view];
@@ -316,21 +316,39 @@ export class Server {
                 }
 
                 let urlPath = req.path === '/' ? defaultPath : req.path;
-                let filePath = Path.join(path, urlPath);
+                let filePath: string | undefined = Path.join(path, urlPath);
 
-                try {
-                    let stats = FS.statSync(filePath);
-
-                    if (!stats.isFile()) {
-                        resolve(req);
-                        return;
+                let candidates = [
+                    {
+                        path: `${filePath}.gz`,
+                        gzipped: true
+                    },
+                    {
+                        path: filePath,
+                        gzipped: false
                     }
+                ]
 
-                    res.setHeader('Content-Length', stats.size.toString());
-                } catch (error) {
+                let target = findAndMerge(candidates, candidate => {
+                    try {
+                        let stats = FS.statSync(candidate.path);
+                        return stats.isFile() ?
+                            { size: stats.size } : undefined;
+                    } catch (error) {
+                        return undefined;
+                    }
+                });
+
+                if (!target) {
                     resolve(req);
                     return;
                 }
+
+                if (target.gzipped) {
+                    res.setHeader('Content-Encoding', 'gzip');
+                }
+
+                res.setHeader('Content-Length', target.size.toString());
 
                 let extname = Path.extname(filePath);
 
@@ -341,7 +359,7 @@ export class Server {
                 );
 
                 try {
-                    let stream = FS.createReadStream(filePath);
+                    let stream = FS.createReadStream(target.path);
 
                     stream.pipe(res);
 
@@ -358,3 +376,27 @@ export class Server {
 }
 
 export default Server;
+
+type FindAndMergeFilter<T, U> = (item: T) => U | undefined;
+
+function findAndMerge<T, U>(items: T[], filter: FindAndMergeFilter<T, U>): T & U | undefined {
+    for (let item of items) {
+        let ret = filter(item);
+
+        if (ret) {
+            return assign(item, ret);
+        }
+    }
+
+    return undefined;
+}
+
+function assign<T, U>(target: T, source: U): T & U {
+    for (let key of Object.keys(source)) {
+        if (!(key in target)) {
+            (<any>target)[key] = (<any>source)[key];
+        }
+    }
+
+    return target as T & U;
+}

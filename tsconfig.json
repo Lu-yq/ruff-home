@@ -5,16 +5,18 @@
         "noLib": true,
         "noEmitOnError": true,
         "noImplicitAny": true,
-        "experimentalDecorators": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
         "preserveConstEnums": true,
         "removeComments": true,
         "declaration": true,
         "sourceMap": true,
+        "newLine": "LF",
         "outDir": "bld"
     },
     "exclude": [
-        "bld",
-        "test",
-        "node_modules"
+        "node_modules",
+        "ruff_modules"
     ]
 }

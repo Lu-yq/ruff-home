@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/vilic/ruff-home.svg)](https://travis-ci.org/vilic/ruff-home)
+
 # Home (Web Framework) for Ruff
 
 GitHub <https://github.com/vilic/ruff-home>
