@@ -4,3 +4,4 @@ node_js:
 before_script:
   - npm run install-sdk
   - npm run install-rap-dependencies
+  - npm run build
