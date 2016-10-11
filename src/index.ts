@@ -36,7 +36,7 @@ export interface Middleware {
 export interface RouteOptions {
     method: string | undefined;
     path: string;
-    extend: boolean;
+    extendable: boolean;
     middleware: Middleware;
 }
 
@@ -114,11 +114,15 @@ export class Server {
             if (
                 (method && method !== req.method) || (
                     pathname !== route.path &&
-                    (!route.extend || pathname.indexOf(route.pathWithEndingSlash) !== 0)
+                    (!route.extendable || pathname.indexOf(route.pathWithEndingSlash) !== 0)
                 )
             ) {
                 next();
                 return;
+            }
+
+            if (route.extendable) {
+                req.path = pathname.substr(route.path.length);
             }
 
             let resultResolvable: Resolvable<Response | Object | void>;
@@ -137,12 +141,20 @@ export class Server {
                 Promise
                     .resolve(resultResolvable)
                     .then(result => {
+                        if (route.extendable) {
+                            req.path = pathname;
+                        }
+
                         if (result === req) {
                             next();
                         } else {
                             this._handleResult(req, res, result);
                         }
                     }, reason => {
+                        if (route.extendable) {
+                            req.path = pathname;
+                        }
+
                         this._handleError(req, res, reason);
                     });
             }
@@ -173,7 +185,7 @@ export class Server {
         this.add({
             method: undefined,
             path,
-            extend: true,
+            extendable: true,
             middleware
         });
     }
@@ -182,7 +194,7 @@ export class Server {
         this.add({
             method: 'GET',
             path,
-            extend: false,
+            extendable: false,
             middleware
         });
     }
@@ -191,7 +203,7 @@ export class Server {
         this.add({
             method: 'POST',
             path,
-            extend: false,
+            extendable: false,
             middleware
         });
     }
