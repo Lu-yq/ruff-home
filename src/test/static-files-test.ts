@@ -55,8 +55,18 @@ describe('Static files under specified path', () => {
     let server: Server;
 
     before(() => {
-        server = new Server();
+        server = new Server({
+            views: Path.join(__dirname, '../../test/views')
+        });
+
         server.use('/build', Server.static(Path.join(__dirname, '../../test/static')));
+
+        server.get('/', () => {
+            return {
+                foo: 'abc'
+            };
+        });
+
         return server.listen(port);
     });
 
@@ -90,6 +100,14 @@ describe('Static files under specified path', () => {
             })
             .then(buffer => {
                 buffer.length.should.be.greaterThan(0);
+            });
+    });
+
+    it('Should not break views path', () => {
+        return fetch(baseUrl)
+            .then(response => response.text())
+            .then(text => {
+                text.trim().should.equal('abc');
             });
     });
 });

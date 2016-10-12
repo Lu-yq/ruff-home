@@ -95,7 +95,6 @@ export class Server {
         let urlStr = req.url;
         let { pathname, query: queryStr } = URL.parse(urlStr!);
 
-        req.path = pathname;
         req.query = QueryString.parse(queryStr);
 
         let routes = this.routes;
@@ -105,7 +104,7 @@ export class Server {
             let route = routes[index++];
 
             if (!route) {
-                this._handleError(req, res, new NotFoundError('Page Not Found', pathname));
+                this._handleError(pathname, res, new NotFoundError('Page Not Found', pathname));
                 return;
             }
 
@@ -121,16 +120,15 @@ export class Server {
                 return;
             }
 
-            if (route.extendable) {
-                req.path = pathname.substr(route.path.length);
-            }
+            req.path = route.extendable && route.path !== '/' ?
+                pathname.substr(route.path.length) : pathname;
 
             let resultResolvable: Resolvable<Response | Object | void>;
 
             try {
                 resultResolvable = route.middleware(req, res);
             } catch (error) {
-                this._handleError(req, res, error);
+                this._handleError(pathname, res, error);
                 return;
             }
 
@@ -141,21 +139,13 @@ export class Server {
                 Promise
                     .resolve(resultResolvable)
                     .then(result => {
-                        if (route.extendable) {
-                            req.path = pathname;
-                        }
-
                         if (result === req) {
                             next();
                         } else {
-                            this._handleResult(req, res, result);
+                            this._handleResult(pathname, res, result);
                         }
                     }, reason => {
-                        if (route.extendable) {
-                            req.path = pathname;
-                        }
-
-                        this._handleError(req, res, reason);
+                        this._handleError(pathname, res, reason);
                     });
             }
         };
@@ -220,7 +210,7 @@ export class Server {
         });
     }
 
-    private _handleResult(req: Request, res: ServerResponse, result: Response | Object | void): void {
+    private _handleResult(path: string, res: ServerResponse, result: Response | Object | void): void {
         if ((<any>res)._headerSent) {
             return;
         }
@@ -231,7 +221,7 @@ export class Server {
             // Ideally, we should convert result into an instance of response and apply it later.
             // But as it's running on board, that step is skipped for performance reason.
 
-            let html = this._render(req.path, result);
+            let html = this._render(path, result);
 
             if (html === undefined) {
                 let json = JSON.stringify(result);
@@ -250,7 +240,7 @@ export class Server {
         }
     }
 
-    private _handleError(req: Request, res: ServerResponse, error: ExpectedError | Error | Object): void {
+    private _handleError(path: string, res: ServerResponse, error: ExpectedError | Error | Object): void {
         if ((<any>res)._headerSent) {
             return;
         }
